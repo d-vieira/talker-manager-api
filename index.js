@@ -11,6 +11,20 @@ app.use(bodyParser.json());
 const HTTP_OK_STATUS = 200;
 const PORT = '3000';
 
+app.get('/talker/search',
+  middleware.tokenValidation,
+  middleware.queryValidation,
+  async (req, res) => {
+    const { q } = req.query;
+    
+    const talkers = await fs.readFile(talkersFile);
+    const talkersParsed = await JSON.parse(talkers);
+    
+    const found = talkersParsed.filter((talker) => talker.name.includes(q));
+
+    return res.status(HTTP_OK_STATUS).json(found);
+});
+
 // não remova esse endpoint, e para o avaliador funcionar
 app.get('/', (_request, response) => {
   response.status(HTTP_OK_STATUS).send();
@@ -28,21 +42,21 @@ app.get('/talker/:id', middleware.talkerByIdValidation, async (req, res) => {
   const talkers = await fs.readFile(talkersFile);
   const talkersParsed = await JSON.parse(talkers);
   const found = talkersParsed.find((talker) => talker.id === Number(id));
-
+  
   return res.status(HTTP_OK_STATUS).json(found);
 });
 
 app.post('/login',
-  middleware.passwordValidation,
-  middleware.emailValidation,
-  (_req, res) => {
-    const myToken = middleware.generateToken();
-    return res.status(HTTP_OK_STATUS).json({ token: `${myToken}` });
+middleware.passwordValidation,
+middleware.emailValidation,
+(_req, res) => {
+  const myToken = middleware.generateToken();
+  return res.status(HTTP_OK_STATUS).json({ token: `${myToken}` });
 });
 
 app.use(middleware.tokenValidation);
 
-app.delete('/talker/:id', async (req, res) => {
+app.delete('/talker/:id', middleware.talkersDataValidation, async (req, res) => {
   const { id } = req.params;
   const talkers = await fs.readFile(talkersFile);
   const talkersParsed = await JSON.parse(talkers);
@@ -56,7 +70,7 @@ app.delete('/talker/:id', async (req, res) => {
   
   const toString = JSON.stringify(deleted);
   await fs.writeFile(talkersFile, toString);
-
+  
   return res.status(204).end();
 });
 

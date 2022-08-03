@@ -146,6 +146,25 @@ const rateValidation = (req, res, next) => {
   next();
 };
 
+const queryValidation = async (req, res, next) => {
+  const { q } = req.query;
+
+  const talkers = await fs.readFile(talkersFile);
+  const talkersParsed = await JSON.parse(talkers);
+
+  const found = talkersParsed.filter((talker) => talker.name.includes(q));
+  
+  if (!q) {
+    return res.status(200).json(talkersParsed);
+  }
+
+  if (!found) {
+    return res.status(200).json([]);
+  }
+
+  next();
+};
+
 module.exports = {
   generateToken,
   talkersDataValidation,
@@ -158,4 +177,5 @@ module.exports = {
   talkValidation,
   dateValidation,
   rateValidation,
+  queryValidation,
 };
