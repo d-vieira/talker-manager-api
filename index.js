@@ -41,6 +41,25 @@ app.post('/login',
 });
 
 app.use(middleware.tokenValidation);
+
+app.delete('/talker/:id', async (req, res) => {
+  const { id } = req.params;
+  const talkers = await fs.readFile(talkersFile);
+  const talkersParsed = await JSON.parse(talkers);
+  const found = talkersParsed.findIndex((talker) => talker.id === Number(id));
+
+  // const workOn = talkersParsed.filter((talker, index) => talker[index] !== talker[found]);
+
+  const workOn = talkersParsed.splice(found, 1);
+
+  const deleted = { workOn };
+  
+  const toString = JSON.stringify(deleted);
+  await fs.writeFile(talkersFile, toString);
+
+  return res.status(204).end();
+});
+
 app.use(middleware.nameValidation);
 app.use(middleware.ageValidation);
 app.use(middleware.talkValidation);
@@ -82,7 +101,7 @@ app.put('/talker/:id', async (req, res) => {
   const found = talkersParsed.findIndex((talker) => talker.id === Number(id));
 
   const workOn = [{ ...talkersParsed[found], name, age, talk }];
-  
+
   const toString = JSON.stringify(workOn);
   await fs.writeFile(talkersFile, toString);
 
