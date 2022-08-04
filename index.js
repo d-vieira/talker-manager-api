@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs').promises;
 const middleware = require('./middleware');
+const helpers = require('./helpers');
 
 const talkersFile = './talker.json';
 
@@ -50,7 +51,7 @@ app.post('/login',
 middleware.passwordValidation,
 middleware.emailValidation,
 (_req, res) => {
-  const myToken = middleware.generateToken();
+  const myToken = helpers.generateToken();
   return res.status(HTTP_OK_STATUS).json({ token: `${myToken}` });
 });
 

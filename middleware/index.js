@@ -1,9 +1,6 @@
-const crypto = require('crypto');
 const fs = require('fs').promises;
 
 const talkersFile = './talker.json';
-
-const generateToken = () => crypto.randomBytes(8).toString('hex');
 
 const talkersDataValidation = async (_req, res, next) => {
   const talkers = await fs.readFile(talkersFile);
@@ -166,7 +163,6 @@ const queryValidation = async (req, res, next) => {
 };
 
 module.exports = {
-  generateToken,
   talkersDataValidation,
   talkerByIdValidation,
   passwordValidation,
