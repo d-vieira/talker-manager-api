@@ -1,16 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs').promises;
 const middleware = require('./middleware');
 const helpers = require('./helpers');
-
-const talkersFile = './talker.json';
 
 const app = express();
 app.use(bodyParser.json());
 
 const HTTP_OK_STATUS = 200;
 const PORT = '3000';
+const TALKERS_FILE = './talker.json';
 
 app.get('/talker/search',
   middleware.tokenValidation,
@@ -18,10 +16,8 @@ app.get('/talker/search',
   async (req, res) => {
     const { q } = req.query;
     
-    const talkers = await fs.readFile(talkersFile);
-    const talkersParsed = await JSON.parse(talkers);
-    
-    const found = talkersParsed.filter((talker) => talker.name.includes(q));
+    const talkers = await helpers.readFile(TALKERS_FILE);
+    const found = talkers.filter((talker) => talker.name.includes(q));
 
     return res.status(HTTP_OK_STATUS).json(found);
 });
@@ -32,17 +28,16 @@ app.get('/', (_request, response) => {
 });
 
 app.get('/talker', middleware.talkersDataValidation, async (_req, res) => {
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
+  const talkers = await helpers.readFile(TALKERS_FILE);
 
-  return res.status(HTTP_OK_STATUS).json(talkersParsed);
+  return res.status(HTTP_OK_STATUS).json(talkers);
 });
 
 app.get('/talker/:id', middleware.talkerByIdValidation, async (req, res) => {
   const { id } = req.params;
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
-  const found = talkersParsed.find((talker) => talker.id === Number(id));
+  
+  const talkers = await helpers.readFile(TALKERS_FILE);
+  const found = talkers.find((talker) => talker.id === Number(id));
   
   return res.status(HTTP_OK_STATUS).json(found);
 });
@@ -59,18 +54,15 @@ app.use(middleware.tokenValidation);
 
 app.delete('/talker/:id', middleware.talkersDataValidation, async (req, res) => {
   const { id } = req.params;
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
-  const found = talkersParsed.findIndex((talker) => talker.id === Number(id));
-
-  // const workOn = talkersParsed.filter((talker, index) => talker[index] !== talker[found]);
-
-  const workOn = talkersParsed.splice(found, 1);
-
-  const deleted = { workOn };
   
-  const toString = JSON.stringify(deleted);
-  await fs.writeFile(talkersFile, toString);
+  const talkers = await helpers.readFile(TALKERS_FILE);
+  const found = talkers.findIndex((talker) => talker.id === Number(id));
+
+  // ALTERNATIVA const workOn = talkersParsed.filter((talker, index) => talker[index] !== talker[found]);
+  const workOn = talkers.splice(found, 1);
+
+  const deleteTalker = { workOn };
+  await helpers.writeFile(TALKERS_FILE, deleteTalker);
   
   return res.status(204).end();
 });
@@ -83,9 +75,8 @@ app.use(middleware.dateValidation);
 
 app.post('/talker', async (req, res) => {
   const { name, age, talk: { watchedAt, rate } } = req.body;
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
-  const id = talkersParsed.length + 1;
+  const talkers = await helpers.readFile(TALKERS_FILE);
+  const id = talkers.length + 1;
   const newTalker = {
     id,
     name,
@@ -95,9 +86,8 @@ app.post('/talker', async (req, res) => {
       rate,
     },
   };
-  const addNewTalker = [...talkersParsed, newTalker];
-  const toString = JSON.stringify(addNewTalker);
-  await fs.writeFile(talkersFile, toString);
+  const addNewTalker = [...talkers, newTalker];
+  await helpers.writeFile(TALKERS_FILE, addNewTalker);
   
   return res.status(201).json(newTalker);
 });
@@ -105,20 +95,17 @@ app.post('/talker', async (req, res) => {
 app.put('/talker/:id', async (req, res) => {
   const { id } = req.params;
   const { name, age, talk } = req.body;
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
+  const talkers = await helpers.readFile(TALKERS_FILE);
   const newTalker = {
     id: Number(id),
     name,
     age,
     talk,
   };
-  const found = talkersParsed.findIndex((talker) => talker.id === Number(id));
+  const found = talkers.findIndex((talker) => talker.id === Number(id));
 
-  const workOn = [{ ...talkersParsed[found], name, age, talk }];
-
-  const toString = JSON.stringify(workOn);
-  await fs.writeFile(talkersFile, toString);
+  const updateTalker = [{ ...talkers[found], name, age, talk }];
+  await helpers.writeFile(TALKERS_FILE, updateTalker);
 
   return res.status(HTTP_OK_STATUS).json(newTalker);
 });

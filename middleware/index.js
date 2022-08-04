@@ -1,15 +1,11 @@
-const fs = require('fs').promises;
+const helpers = require('../helpers');
 
-const talkersFile = './talker.json';
+const TALKERS_FILE = './talker.json';
 
 const talkersDataValidation = async (_req, res, next) => {
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
-  // const data = [];
-  // talkersParsed.forEach((talker) => data.push(talker));
-  // return res.status(200).json(data);
-  
-  if (talkersParsed.length === 0) {
+  const talkers = await helpers.readFile(TALKERS_FILE);
+
+  if (talkers.length === 0) {
     return res.status(200).json([]);
   }
 
@@ -18,9 +14,8 @@ const talkersDataValidation = async (_req, res, next) => {
 
 const talkerByIdValidation = async (req, res, next) => {
   const { id } = req.params;
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
-  const found = talkersParsed.find((talker) => talker.id === Number(id));
+  const talkers = await helpers.readFile(TALKERS_FILE);
+  const found = talkers.find((talker) => talker.id === Number(id));
 
   if (!found) {
     return res.status(404).json({ message: 'Pessoa palestrante não encontrada' });
@@ -146,13 +141,11 @@ const rateValidation = (req, res, next) => {
 const queryValidation = async (req, res, next) => {
   const { q } = req.query;
 
-  const talkers = await fs.readFile(talkersFile);
-  const talkersParsed = await JSON.parse(talkers);
-
-  const found = talkersParsed.filter((talker) => talker.name.includes(q));
+  const talkers = await helpers.readFile(TALKERS_FILE);
+  const found = talkers.filter((talker) => talker.name.includes(q));
   
   if (!q) {
-    return res.status(200).json(talkersParsed);
+    return res.status(200).json(talkers);
   }
 
   if (!found) {
